@@ -18,7 +18,7 @@ from typing import Optional
 from cprest.client import Client
 
 
-class SessionOperator(Client):
+class ActiveSessionOperator(Client):
 
     def get_list(self, limit: int = 1000,
                  max_requests: int = 10) -> Optional[list]:
