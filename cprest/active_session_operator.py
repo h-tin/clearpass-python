@@ -22,7 +22,7 @@ class ActiveSessionOperator(Client):
 
     def get_list(self, limit: int = 1000,
                  max_requests: int = 10) -> Optional[list]:
-        """Get a list of active session.
+        """Get a list of active sessions.
 
         Args:
             limit: Maximum number of sessions (1 to 1000) per request.
@@ -32,7 +32,7 @@ class ActiveSessionOperator(Client):
             ValueError: The limit or max requests is invalid.
 
         Returns:
-            List of active session.
+            List of active sessions.
             None means that an error has occurred.
         """
         if not (1 <= limit <= 1000):
