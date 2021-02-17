@@ -35,7 +35,7 @@ class StaticHostListOperator(Client):
         if json and "host_entries" in json:
             return json["host_entries"]
 
-    def replace_host_entries(self, name: str, host_entries: list):
+    def replace_host_entries(self, name: str, host_entries: list) -> Optional[list]:
         """Replace the host entries in the Static Host List on the server.
 
         Args:
