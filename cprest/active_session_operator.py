@@ -20,11 +20,12 @@ from cprest.client import Client
 
 class ActiveSessionOperator(Client):
 
-    def get_list(self, limit: int = 1000,
-                 max_requests: int = 10) -> Optional[list]:
+    def get_list(self, filter: str = '{"acctstoptime":{"$exists":false}}',
+                 limit: int = 1000, max_requests: int = 10) -> Optional[list]:
         """Get a list of active sessions.
 
         Args:
+            filter: Conditions written in JSON for extracting items.
             limit: Maximum number of sessions (1 to 1000) per request.
             max_requests: Maximum number of requests.
 
@@ -46,7 +47,7 @@ class ActiveSessionOperator(Client):
             r = self.get(
                 resource="/session",
                 params={
-                    "filter": "{\"acctstoptime\":{\"$exists\":false}}",
+                    "filter": filter,
                     "offset": str(limit * count),
                     "limit": str(limit)})
             # Decode sessions.
