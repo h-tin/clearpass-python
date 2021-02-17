@@ -17,3 +17,4 @@
 from cprest.client import *
 from cprest.active_session_operator import *
 from cprest.endpoint_operator import *
+from cprest.static_host_list_operator import *

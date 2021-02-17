@@ -43,18 +43,15 @@ class EndpointOperator(Client):
 
         endpoints = []
         for count in range(max_requests):
-            # Get endpoints up to the limit.
             r = self.get(
                 resource="/endpoint",
                 params={
                     "filter": filter,
                     "offset": str(limit * count),
                     "limit": str(limit)})
-            # Decode endpoints.
             json = r.json()
             if json and "_embedded" in json and "items" in json["_embedded"]:
                 if len(json["_embedded"]["items"]) > 0:
-                    # Add endpoints to the list.
                     endpoints += json["_embedded"]["items"]
                 else:
                     # No more endpoints.

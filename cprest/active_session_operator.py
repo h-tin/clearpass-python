@@ -43,18 +43,15 @@ class ActiveSessionOperator(Client):
 
         sessions = []
         for count in range(max_requests):
-            # Get sessions up to the limit.
             r = self.get(
                 resource="/session",
                 params={
                     "filter": filter,
                     "offset": str(limit * count),
                     "limit": str(limit)})
-            # Decode sessions.
             json = r.json()
             if json and "_embedded" in json and "items" in json["_embedded"]:
                 if len(json["_embedded"]["items"]) > 0:
-                    # Add sessions to the list.
                     sessions += json["_embedded"]["items"]
                 else:
                     # No more sessions.
