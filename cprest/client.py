@@ -38,7 +38,7 @@ class Client:
         """Initializes Client.
 
         Args:
-            **kwargs: Arbitrary keyword arguments that initializes attributes.
+            **kwargs: Arbitrary keyword arguments that initialize attributes.
         """
         self.host = kwargs["host"] if "host" in kwargs else ""
         self.port = kwargs["port"] if "port" in kwargs else 443
