@@ -20,14 +20,14 @@ from cprest.client import Client
 
 class ActiveSessionOperator(Client):
 
-    def get_list(self, filter: str = '{"acctstoptime":{"$exists":false}}',
-                 limit: int = 1000, max_requests: int = 10) -> Optional[list]:
+    def get_list(self, **kwargs) -> Optional[list]:
         """Get a list of active sessions.
 
-        Args:
-            filter: Conditions written in JSON for extracting items.
-            limit: Maximum number of sessions (1 to 1000) per request.
-            max_requests: Maximum number of requests.
+        Keyword Args:
+            filter (str): Conditions written in JSON for extracting items,
+                default '{"acctstoptime":{"$exists":false}}'.
+            limit (int): Maximum number of sessions (1 to 1000) per request, default 1000.
+            max_requests (int): Maximum number of requests, default 10.
 
         Raises:
             ValueError: The limit or max requests is invalid.
@@ -36,6 +36,10 @@ class ActiveSessionOperator(Client):
             List of active sessions.
             None means that an error has occurred.
         """
+        filter = kwargs["filter"] if "filter" in kwargs else '{"acctstoptime":{"$exists":false}}'
+        limit = kwargs["limit"] if "limit" in kwargs else 1000
+        max_requests = kwargs["max_requests"] if "max_requests" in kwargs else 10
+
         if not (1 <= limit <= 1000):
             raise ValueError("The limit is invalid.")
         if not (1 <= max_requests):
