@@ -155,19 +155,18 @@ class Client:
         """Call self.request() with DELETE method."""
         return self.request(method="DELETE", resource=resource, **kwargs)
 
-    def authenticate(self, grant_type: str, client_id: str,
-                     client_secret: str = "",
-                     username: str = "", password: str = "",
-                     refresh_token: str = "") -> requests.Response:
+    def authenticate(self, grant_type: str, client_id: str, **kwargs) -> requests.Response:
         """OAuth2.0 authentication.
 
         Args:
             grant_type (str): One of "client_credentials", "password", "refresh_token".
             client_id (str): API client identifier on ClearPass.
-            client_secret (str): Client secret.
-            username (str): Username for password grant type.
-            password (str): Password for password authentication.
-            refresh_token (str): Refresh token for refresh token grant type.
+
+        Keyword Args:
+            client_secret (str): Client secret, default empty.
+            username (str): Username for password grant type, default empty.
+            password (str): Password for password authentication, default empty.
+            refresh_token (str): Refresh token for refresh token grant type, default empty.
 
         Raises:
             Same as self.request() method.
@@ -179,14 +178,14 @@ class Client:
         # Request body.
         body = {"grant_type": grant_type, "client_id": client_id}
         if grant_type == "client_credentials":
-            body["client_secret"] = client_secret
+            body["client_secret"] = kwargs["client_secret"] if "client_secret" in kwargs else ""
         elif grant_type == "password":
-            body["username"] = username
-            body["password"] = password
-            if client_secret != "":
-                body["client_secret"] = client_secret
+            body["username"] = kwargs["username"] if "username" in kwargs else ""
+            body["password"] = kwargs["password"] if "password" in kwargs else ""
+            if "client_secret" in kwargs and kwargs["client_secret"] != "":
+                body["client_secret"] = kwargs["client_secret"]
         elif grant_type == "refresh_token":
-            body["refresh_token"] = refresh_token
+            body["refresh_token"] = kwargs["refresh_token"] if "refresh_token" in kwargs else ""
         else:
             raise ValueError("Unsupported grant type.")
 
