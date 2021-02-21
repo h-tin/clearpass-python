@@ -53,6 +53,7 @@ class ActiveSessionOperator(Client):
                 resource="/session",
                 params={
                     "filter": filter,
+                    "sort": sort,
                     "offset": str(limit * count),
                     "limit": str(limit)})
             if rsp.status_code == 200:
