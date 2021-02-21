@@ -26,6 +26,7 @@ class ActiveSessionOperator(Client):
         Keyword Args:
             filter (str): Conditions written in JSON for extracting items,
                 default '{"acctstoptime":{"$exists":false}}'.
+            sort (str): Sort ordering, default "-id"
             limit (int): Maximum number of sessions (1 to 1000) per request, default 1000.
             max_requests (int): Maximum number of requests, default 10.
 
@@ -37,6 +38,7 @@ class ActiveSessionOperator(Client):
             None means that an error has occurred.
         """
         filter = kwargs["filter"] if "filter" in kwargs else '{"acctstoptime":{"$exists":false}}'
+        sort = kwargs["sort"] if "sort" in kwargs else "-id"
         limit = kwargs["limit"] if "limit" in kwargs else 1000
         max_requests = kwargs["max_requests"] if "max_requests" in kwargs else 10
 
