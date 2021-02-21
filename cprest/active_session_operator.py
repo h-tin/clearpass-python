@@ -47,21 +47,24 @@ class ActiveSessionOperator(Client):
 
         sessions = []
         for count in range(max_requests):
-            r = self.get(
+            rsp = self.get(
                 resource="/session",
                 params={
                     "filter": filter,
                     "offset": str(limit * count),
                     "limit": str(limit)})
-            json = r.json()
-            if json and "_embedded" in json and "items" in json["_embedded"]:
-                if len(json["_embedded"]["items"]) > 0:
-                    sessions += json["_embedded"]["items"]
+            if rsp.status_code == 200:
+                json = rsp.json()
+                if json and "_embedded" in json and "items" in json["_embedded"]:
+                    if len(json["_embedded"]["items"]) > 0:
+                        sessions += json["_embedded"]["items"]
+                    else:
+                        # No more sessions.
+                        break
                 else:
-                    # No more sessions.
-                    break
+                    # Bad response.
+                    return None
             else:
-                # Error.
                 return None
         return sessions
 
@@ -75,12 +78,13 @@ class ActiveSessionOperator(Client):
             JSON data from the server.
             None means that an error has occurred.
         """
-        r = self.post(
+        rsp = self.post(
             resource="/session/" + session_id + "/disconnect",
             body={
                 "id": session_id,
                 "confirm_disconnect": "true"})
-        return r.json()
+        if rsp.status_code == 200:
+            return rsp.json()
 
     def reauthorize(self, session_id: str, profile: str) -> Optional[dict]:
         """Reauthorize an active session.
@@ -93,10 +97,11 @@ class ActiveSessionOperator(Client):
             JSON data from the server.
             None means that an error has occurred.
         """
-        r = self.post(
+        rsp = self.post(
             resource="/session/" + session_id + "/reauthorize",
             body={
                 "id": session_id,
                 "confirm_reauthorize": "true",
                 "reauthorize_profile": profile})
-        return r.json()
+        if rsp.status_code == 200:
+            return rsp.json()

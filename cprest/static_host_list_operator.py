@@ -30,10 +30,11 @@ class StaticHostListOperator(Client):
             List of host entries.
             None means that an error has occurred.
         """
-        r = self.get(resource="/static-host-list/name/" + name)
-        json = r.json()
-        if json and "host_entries" in json:
-            return json["host_entries"]
+        rsp = self.get(resource="/static-host-list/name/" + name)
+        if rsp.status_code == 200:
+            json = rsp.json()
+            if json and "host_entries" in json:
+                return json["host_entries"]
 
     def replace_host_entries(self, name: str, host_entries: list) -> Optional[list]:
         """Replace the host entries in the Static Host List on the server.
@@ -53,9 +54,10 @@ class StaticHostListOperator(Client):
         if len(host_entries) < 1:
             raise ValueError("The host entriy is empty.")
 
-        r = self.patch(
+        rsp = self.patch(
             resource="/static-host-list/name/" + name,
             body={"host_entries": host_entries})
-        json = r.json()
-        if json and "host_entries" in json:
-            return json["host_entries"]
+        if rsp.status_code == 200:
+            json = rsp.json()
+            if json and "host_entries" in json:
+                return json["host_entries"]

@@ -49,6 +49,7 @@ class Client:
         self._token_type = None
         self._expires_in = None
         self._refresh_token = None
+        self._last_status_code = 0
 
     @property
     def is_authorized(self) -> bool:
@@ -73,9 +74,7 @@ class Client:
 
     @property
     def refresh_token(self) -> Optional[str]:
-        """Refresh token.
-           None means that no refresh token has been issued.
-        """
+        """Refresh token. None means that no refresh token has been issued."""
         return self._refresh_token
 
     @property
@@ -86,11 +85,16 @@ class Client:
         else:
             return "".join(["https://", self.host, ":", str(self.port), "/api"])
 
-    def request(self, method: str, resource: str, **kwargs) -> requests.Response:
+    @property
+    def last_status_code(self) -> int:
+        """Last HTTP status code."""
+        return self._last_status_code
+
+    def request(self, *, method: str, resource: str, **kwargs) -> requests.Response:
         """Invoke an API request.
 
         Args:
-            method (str): One of GET, POST, PATCH, PUT, DELETE.
+            method (str): HTTP method, one of "GET", "POST", "PATCH", "PUT", "DELETE".
             resource (str): Target resource.
 
         Keyword Args:
@@ -126,7 +130,7 @@ class Client:
             headers["Content-Type"] = "application/json"
 
         # Invoke request.
-        return requests.request(
+        rsp = requests.request(
             method=method,
             url=self.base_url + resource,
             params=kwargs["params"] if "params" in kwargs else {},
@@ -134,28 +138,30 @@ class Client:
             json=kwargs["body"] if "body" in kwargs else {},
             timeout=self.timeout,
             verify=self.verify_cert)
+        self._last_status_code = rsp.status_code
+        return rsp
 
-    def get(self, resource: str, **kwargs) -> requests.Response:
+    def get(self, *, resource: str, **kwargs) -> requests.Response:
         """Call self.request() with GET method."""
         return self.request(method="GET", resource=resource, **kwargs)
 
-    def post(self, resource: str, **kwargs) -> requests.Response:
+    def post(self, *, resource: str, **kwargs) -> requests.Response:
         """Call self.request() with POST method."""
         return self.request(method="POST", resource=resource, **kwargs)
 
-    def patch(self, resource: str, **kwargs) -> requests.Response:
+    def patch(self, *, resource: str, **kwargs) -> requests.Response:
         """Call self.request() with PATCH method."""
         return self.request(method="PATCH", resource=resource, **kwargs)
 
-    def put(self, resource: str, **kwargs) -> requests.Response:
+    def put(self, *, resource: str, **kwargs) -> requests.Response:
         """Call self.request() with PUT method."""
         return self.request(method="PUT", resource=resource, **kwargs)
 
-    def delete(self, resource: str, **kwargs) -> requests.Response:
+    def delete(self, *, resource: str, **kwargs) -> requests.Response:
         """Call self.request() with DELETE method."""
         return self.request(method="DELETE", resource=resource, **kwargs)
 
-    def authenticate(self, grant_type: str, client_id: str, **kwargs) -> requests.Response:
+    def authenticate(self, *, grant_type: str, client_id: str, **kwargs) -> requests.Response:
         """OAuth2.0 authentication.
 
         Args:
@@ -190,7 +196,7 @@ class Client:
             raise ValueError("Unsupported grant type.")
 
         # Authentication request.
-        rsp = self.post("/oauth", body=body)
+        rsp = self.post(resource="/oauth", body=body)
         if rsp.status_code == 200:
             # Current time.
             self._authorized_at = time.time()
