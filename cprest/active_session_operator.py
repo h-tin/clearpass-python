@@ -14,8 +14,12 @@
 #   limitations under the License.
 #
 
+from logging import getLogger
 from typing import Optional
+
 from cprest.client import Client
+
+logger = getLogger(__name__)
 
 
 class ActiveSessionOperator(Client):
@@ -49,15 +53,16 @@ class ActiveSessionOperator(Client):
 
         sessions = []
         for count in range(max_requests):
-            rsp = self.get(
+            r = self.get(
                 resource="/session",
                 params={
                     "filter": filter,
                     "sort": sort,
                     "offset": str(limit * count),
                     "limit": str(limit)})
-            if rsp.status_code == 200:
-                json = rsp.json()
+            logger.debug("HTTP response: %s", str(vars(r)))
+            if r.status_code == 200:
+                json = r.json()
                 if json and "_embedded" in json and "items" in json["_embedded"]:
                     if len(json["_embedded"]["items"]) > 0:
                         sessions += json["_embedded"]["items"]
@@ -66,8 +71,10 @@ class ActiveSessionOperator(Client):
                         break
                 else:
                     # Bad response.
+                    logger.error("Bad response.")
                     return None
             else:
+                logger.error("HTTP error: %s", r.status_code)
                 return None
         return sessions
 
@@ -81,13 +88,16 @@ class ActiveSessionOperator(Client):
             JSON data from the server.
             None means that an error has occurred.
         """
-        rsp = self.post(
+        r = self.post(
             resource="/session/" + session_id + "/disconnect",
             body={
                 "id": session_id,
                 "confirm_disconnect": "true"})
-        if rsp.status_code == 200:
-            return rsp.json()
+        if r.status_code == 200:
+            return r.json()
+        else:
+            logger.error("HTTP error: %s", r.status_code)
+            return None
 
     def reauthorize(self, session_id: str, profile: str) -> Optional[dict]:
         """Reauthorize an active session.
@@ -100,11 +110,14 @@ class ActiveSessionOperator(Client):
             JSON data from the server.
             None means that an error has occurred.
         """
-        rsp = self.post(
+        r = self.post(
             resource="/session/" + session_id + "/reauthorize",
             body={
                 "id": session_id,
                 "confirm_reauthorize": "true",
                 "reauthorize_profile": profile})
-        if rsp.status_code == 200:
-            return rsp.json()
+        if r.status_code == 200:
+            return r.json()
+        else:
+            logger.error("HTTP error: %s", r.status_code)
+            return None

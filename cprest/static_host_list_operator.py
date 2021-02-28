@@ -14,8 +14,12 @@
 #   limitations under the License.
 #
 
+from logging import getLogger
 from typing import Optional
+
 from cprest.client import Client
+
+logger = getLogger(__name__)
 
 
 class StaticHostListOperator(Client):
@@ -30,11 +34,18 @@ class StaticHostListOperator(Client):
             List of host entries.
             None means that an error has occurred.
         """
-        rsp = self.get(resource="/static-host-list/name/" + name)
-        if rsp.status_code == 200:
-            json = rsp.json()
+        r = self.get(resource="/static-host-list/name/" + name)
+        logger.debug("HTTP response: %s", str(vars(r)))
+        if r.status_code == 200:
+            json = r.json()
             if json and "host_entries" in json:
                 return json["host_entries"]
+            else:
+                # Bad response.
+                logger.error("Bad response.")
+        else:
+            logger.error("HTTP error: %s", r.status_code)
+            return None
 
     def replace_host_entries(self, name: str, host_entries: list) -> Optional[list]:
         """Replace the host entries in the Static Host List on the server.
@@ -52,12 +63,20 @@ class StaticHostListOperator(Client):
         """
         # Static Host List requires at least one host entry.
         if len(host_entries) < 1:
+            logger.error("The host entriy is empty.")
             raise ValueError("The host entriy is empty.")
 
-        rsp = self.patch(
+        r = self.patch(
             resource="/static-host-list/name/" + name,
             body={"host_entries": host_entries})
-        if rsp.status_code == 200:
-            json = rsp.json()
+        logger.debug("HTTP response: %s", str(vars(r)))
+        if r.status_code == 200:
+            json = r.json()
             if json and "host_entries" in json:
                 return json["host_entries"]
+            else:
+                # Bad response.
+                logger.error("Bad response.")
+        else:
+            logger.error("HTTP error: %s", r.status_code)
+            return None

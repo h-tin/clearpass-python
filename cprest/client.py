@@ -15,11 +15,16 @@
 #
 
 import time
+from logging import getLogger
 from typing import Optional, Tuple, Union
+
 import requests
 import urllib3
 from urllib3.exceptions import InsecureRequestWarning
+
 urllib3.disable_warnings(InsecureRequestWarning)
+
+logger = getLogger(__name__)
 
 
 class Client:
@@ -44,12 +49,11 @@ class Client:
         self.port = kwargs["port"] if "port" in kwargs else 443
         self.timeout = kwargs["timeout"] if "timeout" in kwargs else 30.0
         self.verify_cert = kwargs["verify_cert"] if "verify_cert" in kwargs else False
-        self._authorized_at = None
-        self._access_token = None
-        self._token_type = None
-        self._expires_in = None
-        self._refresh_token = None
-        self._last_status_code = 0
+        self._authorized_at = 0.0
+        self._access_token = ""
+        self._token_type = ""
+        self._expires_in = 0
+        self._refresh_token = ""
 
     @property
     def is_authorized(self) -> bool:
@@ -61,7 +65,7 @@ class Client:
         """Authorization header.
            None means that the client has not yet been authorized.
         """
-        if self.is_authorized:
+        if self._token_type and self._access_token:
             return " ".join([self._token_type, self._access_token])
 
     @property
@@ -80,15 +84,7 @@ class Client:
     @property
     def base_url(self) -> str:
         """Base URL."""
-        if self.port == 443:
-            return "".join(["https://", self.host, "/api"])
-        else:
-            return "".join(["https://", self.host, ":", str(self.port), "/api"])
-
-    @property
-    def last_status_code(self) -> int:
-        """Last HTTP status code."""
-        return self._last_status_code
+        return "".join(["https://", self.host, ":", str(self.port), "/api"])
 
     def request(self, *, method: str, resource: str, **kwargs) -> requests.Response:
         """Invoke an API request.
@@ -120,17 +116,20 @@ class Client:
             requests.Response: HTTP response from the server.
         """
         if method not in ["GET", "POST", "PATCH", "PUT", "DELETE"]:
+            logger.error("The HTTP method of %s is not supported.", method)
             raise ValueError("Unsupported method.")
 
         # Request header.
         headers = {}
         if self.is_authorized:
             headers["Authorization"] = self.authorization_header
+            logger.debug("Authorization Header: %s", self.authorization_header)
         if "body" in kwargs and len(kwargs["body"]) > 0:
             headers["Content-Type"] = "application/json"
+            logger.debug("Content-Type: %s", "application/json")
 
         # Invoke request.
-        rsp = requests.request(
+        return requests.request(
             method=method,
             url=self.base_url + resource,
             params=kwargs["params"] if "params" in kwargs else {},
@@ -138,8 +137,6 @@ class Client:
             json=kwargs["body"] if "body" in kwargs else {},
             timeout=self.timeout,
             verify=self.verify_cert)
-        self._last_status_code = rsp.status_code
-        return rsp
 
     def get(self, *, resource: str, **kwargs) -> requests.Response:
         """Call self.request() with GET method."""
@@ -193,21 +190,25 @@ class Client:
         elif grant_type == "refresh_token":
             body["refresh_token"] = kwargs["refresh_token"] if "refresh_token" in kwargs else ""
         else:
+            logger.error("The grant type of %s is not supported.", grant_type)
             raise ValueError("Unsupported grant type.")
 
         # Authentication request.
-        rsp = self.post(resource="/oauth", body=body)
-        if rsp.status_code == 200:
+        r = self.post(resource="/oauth", body=body)
+        if r.status_code == 200:
             # Current time.
             self._authorized_at = time.time()
             # Decode access token and lifetime.
-            json = rsp.json()
+            json = r.json()
             self._access_token = json["access_token"]
             self._token_type = json["token_type"]
             self._expires_in = json["expires_in"]
+            logger.info(
+                "The access token is valid for %s seconds.", self._expires_in)
             # Decode refresh token if included.
             if "refresh_token" in json:
                 self._refresh_token = json["refresh_token"]
         else:
             # Error.
-            return rsp
+            logger.error("Authentication failure.")
+            return r

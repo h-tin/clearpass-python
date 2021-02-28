@@ -14,8 +14,12 @@
 #   limitations under the License.
 #
 
+from logging import getLogger
 from typing import Optional
+
 from cprest.client import Client
+
+logger = getLogger(__name__)
 
 
 class EndpointOperator(Client):
@@ -42,21 +46,24 @@ class EndpointOperator(Client):
         max_requests = kwargs["max_requests"] if "max_requests" in kwargs else 10
 
         if not (1 <= limit <= 1000):
+            logger.error("Invalid limit value: %s", limit)
             raise ValueError("The limit is invalid.")
         if not (1 <= max_requests):
+            logger.error("Invalid max requests value: %s", max_requests)
             raise ValueError("The max requests is invalid.")
 
         endpoints = []
         for count in range(max_requests):
-            rsp = self.get(
+            r = self.get(
                 resource="/endpoint",
                 params={
                     "filter": filter,
                     "sort": sort,
                     "offset": str(limit * count),
                     "limit": str(limit)})
-            if rsp.status_code == 200:
-                json = rsp.json()
+            logger.debug("HTTP response: %s", str(vars(r)))
+            if r.status_code == 200:
+                json = r.json()
                 if json and "_embedded" in json and "items" in json["_embedded"]:
                     if len(json["_embedded"]["items"]) > 0:
                         endpoints += json["_embedded"]["items"]
@@ -65,8 +72,10 @@ class EndpointOperator(Client):
                         break
                 else:
                     # Bad response.
+                    logger.error("Bad response.")
                     return None
             else:
+                logger.error("HTTP error: %s", r.status_code)
                 return None
         return endpoints
 
@@ -97,9 +106,13 @@ class EndpointOperator(Client):
             if key in kwargs:
                 body[key] = kwargs[key]
 
-        rsp = self.post(resource="/endpoint", body=body)
-        if rsp.status_code == 201:
-            return rsp.json()
+        r = self.post(resource="/endpoint", body=body)
+        logger.debug("HTTP response: %s", str(vars(r)))
+        if r.status_code == 201:
+            return r.json()
+        else:
+            logger.error("HTTP error: %s", r.status_code)
+            return None
 
     def update_fields_by_mac(self, *, mac_address: str, **kwargs) -> Optional[dict]:
         """Update fields of an endpoint.
@@ -122,8 +135,11 @@ class EndpointOperator(Client):
             if key in kwargs:
                 body[key] = kwargs[key]
 
-        rsp = self.patch(
+        r = self.patch(
             resource="/endpoint/mac-address/" + mac_address,
             body=body)
-        if rsp.status_code == 200:
-            return rsp.json()
+        if r.status_code == 200:
+            return r.json()
+        else:
+            logger.error("HTTP error: %s", r.status_code)
+            return None
