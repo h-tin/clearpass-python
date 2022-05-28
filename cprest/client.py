@@ -45,10 +45,10 @@ class Client:
         Args:
             **kwargs: Arbitrary keyword arguments that initialize attributes.
         """
-        self.host = kwargs["host"] if "host" in kwargs else ""
-        self.port = kwargs["port"] if "port" in kwargs else 443
-        self.timeout = kwargs["timeout"] if "timeout" in kwargs else 30.0
-        self.verify_cert = kwargs["verify_cert"] if "verify_cert" in kwargs else False
+        self.host = kwargs.get("host", "")
+        self.port = kwargs.get("port", 443)
+        self.timeout = kwargs.get("timeout", 30.0)
+        self.verify_cert = kwargs.get("verify_cert", False)
         self._authorized_at = 0.0
         self._access_token = ""
         self._token_type = ""
@@ -124,7 +124,7 @@ class Client:
         if self.is_authorized:
             headers["Authorization"] = self.authorization_header
             logger.debug("Authorization Header: %s", self.authorization_header)
-        if "body" in kwargs and len(kwargs["body"]) > 0:
+        if len(kwargs.get("body", "")) > 0:
             headers["Content-Type"] = "application/json"
             logger.debug("Content-Type: %s", "application/json")
 
@@ -132,9 +132,9 @@ class Client:
         return requests.request(
             method=method,
             url=self.base_url + resource,
-            params=kwargs["params"] if "params" in kwargs else {},
+            params=kwargs.get("params", {}),
             headers=headers,
-            json=kwargs["body"] if "body" in kwargs else {},
+            json=kwargs.get("body", {}),
             timeout=self.timeout,
             verify=self.verify_cert)
 
@@ -181,14 +181,14 @@ class Client:
         # Request body.
         body = {"grant_type": grant_type, "client_id": client_id}
         if grant_type == "client_credentials":
-            body["client_secret"] = kwargs["client_secret"] if "client_secret" in kwargs else ""
+            body["client_secret"] = kwargs.get("client_secret", "")
         elif grant_type == "password":
-            body["username"] = kwargs["username"] if "username" in kwargs else ""
-            body["password"] = kwargs["password"] if "password" in kwargs else ""
+            body["username"] = kwargs.get("username", "")
+            body["password"] = kwargs.get("password", "")
             if "client_secret" in kwargs and kwargs["client_secret"] != "":
                 body["client_secret"] = kwargs["client_secret"]
         elif grant_type == "refresh_token":
-            body["refresh_token"] = kwargs["refresh_token"] if "refresh_token" in kwargs else ""
+            body["refresh_token"] = kwargs.get("refresh_token", "")
         else:
             logger.error("The grant type of %s is not supported.", grant_type)
             raise ValueError("Unsupported grant type.")
