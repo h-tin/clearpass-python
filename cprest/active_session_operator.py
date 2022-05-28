@@ -41,10 +41,10 @@ class ActiveSessionOperator(Client):
             List of active sessions.
             None means that an error has occurred.
         """
-        filter = kwargs["filter"] if "filter" in kwargs else '{"acctstoptime":{"$exists":false}}'
-        sort = kwargs["sort"] if "sort" in kwargs else "-id"
-        limit = kwargs["limit"] if "limit" in kwargs else 1000
-        max_requests = kwargs["max_requests"] if "max_requests" in kwargs else 10
+        filter = kwargs.get("filter", '{"acctstoptime":{"$exists":false}}')
+        sort = kwargs.get("sort", "-id")
+        limit = kwargs.get("limit", 1000)
+        max_requests = kwargs.get("max_requests", 10)
 
         if not (1 <= limit <= 1000):
             raise ValueError("The limit is invalid.")
